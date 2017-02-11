@@ -1,6 +1,6 @@
 package com.cbtsoft.pokercenter.model;
 
-public class Card {
+public class Card  {
     public enum Suit {
         HEART,
         SPADE,
@@ -10,6 +10,11 @@ public class Card {
 
     private Suit suit;
     private int value;
+
+    public Card(Suit suit, int value) {
+        this.suit = suit;
+        this.value = value;
+    }
 
     public Suit getSuit() {
         return suit;
@@ -24,9 +29,11 @@ public class Card {
     }
 
     public void setValue(int value) {
-        if (value <= 0 || value > 13) {  //magic number: 13 equals King(K)
+        if (value <= 0 || value > 14) {  //magic number: 13 equals King(K), 14 equals A.
             throw new IllegalArgumentException("Card value out of bound.");
         }
         this.value = value;
     }
+
+
 }
