@@ -1,6 +1,6 @@
-package com.cbtsoft.pokercenter.helper;
+package com.cbtsoft.pokercenter.core.helper;
 
-import com.cbtsoft.pokercenter.model.Card;
+import com.cbtsoft.pokercenter.core.model.Card;
 
 import java.util.Comparator;
 import java.util.List;

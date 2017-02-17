@@ -1,4 +1,4 @@
-package com.cbtsoft.pokercenter.config;
+package com.cbtsoft.pokercenter.core.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.SimpMessageType;
@@ -13,7 +13,7 @@ public class WebSocketSecurityConfig extends AbstractSecurityWebSocketMessageBro
                 .nullDestMatcher().authenticated()
                 .simpSubscribeDestMatchers("/user/queue/errors").permitAll()
                 .simpDestMatchers("/app/**").hasRole("USER")
-                .simpSubscribeDestMatchers("/user/**", "/topic/friends/*").hasRole("USER")
+                .simpSubscribeDestMatchers("/user/**", "/topic/**").hasRole("USER")
                 .simpTypeMatchers(SimpMessageType.MESSAGE, SimpMessageType.SUBSCRIBE).denyAll()
                 .anyMessage().denyAll();
 

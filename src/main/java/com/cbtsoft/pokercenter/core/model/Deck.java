@@ -1,4 +1,4 @@
-package com.cbtsoft.pokercenter.model;
+package com.cbtsoft.pokercenter.core.model;
 
 import java.util.List;
 
