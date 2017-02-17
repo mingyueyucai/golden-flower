@@ -13,13 +13,13 @@ function setConnected(connected) {
 }
 
 function connect() {
-    var socket = new SockJS('/gs-guide-websocket');
+    var socket = new SockJS('/golden-flower-service');
     stompClient = Stomp.over(socket);
     stompClient.connect({}, function (frame) {
         setConnected(true);
         console.log('Connected: ' + frame);
-        stompClient.subscribe('/topic/greetings', function (greeting) {
-            showGreeting(JSON.parse(greeting.body).content);
+        stompClient.subscribe('/user/topic/message', function (response) {
+            showGreeting(JSON.parse(response.body).messageBody);
         });
     });
 }
@@ -32,8 +32,8 @@ function disconnect() {
     console.log("Disconnected");
 }
 
-function sendName() {
-    stompClient.send("/app/greetings", {}, JSON.stringify({'name': $("#name").val()}));
+function sendCommand() {
+    stompClient.send($("#path").val(), {}, $("#request").val());
 }
 
 function showGreeting(message) {
@@ -46,5 +46,5 @@ $(function () {
     });
     $( "#connect" ).click(function() { connect(); });
     $( "#disconnect" ).click(function() { disconnect(); });
-    $( "#send" ).click(function() { sendName(); });
+    $( "#send" ).click(function() { sendCommand(); });
 });
