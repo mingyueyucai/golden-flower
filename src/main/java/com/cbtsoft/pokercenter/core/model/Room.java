@@ -84,9 +84,10 @@ public class Room {
             }
             Player previous = table.putIfAbsent(seatNum, player);
             boolean result = previous == null;
-            sendMessage(player, new Message("Someone else is sitting here."));
             if (result) {
                 dealer.sit(player);
+            } else {
+                sendMessage(player, new Message("Someone else is sitting here."));
             }
             return result;
         }
