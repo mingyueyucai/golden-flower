@@ -1,5 +1,6 @@
 package com.cbtsoft.pokercenter.core.model;
 
+import com.cbtsoft.pokercenter.core.pojo.Action;
 import com.cbtsoft.pokercenter.core.pojo.Message;
 import com.cbtsoft.pokercenter.core.pojo.Player;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -29,6 +30,7 @@ public class Room {
     }
 
     public void sendMessage(Message message) {
+        message.setMessageBody("Public: " + message.getMessageBody());
         synchronized (allPlayers) {
             for (Player player : allPlayers) {
                 template.convertAndSendToUser(player.getUserName(), "/topic/message", message);
@@ -37,6 +39,7 @@ public class Room {
     }
 
     public void sendMessage(Player player, Message message) {
+        message.setMessageBody("Private: " + message.getMessageBody());
         if (!allPlayers.contains(player)) {
             return;
         }
@@ -73,8 +76,15 @@ public class Room {
             if (status != Status.WAITING) {
                 return false;
             }
+            for (Player one : table.values()) {
+                if (one.equals(player)) {
+                    sendMessage(player, new Message("You have already sitten."));
+                    return false;
+                }
+            }
             Player previous = table.putIfAbsent(seatNum, player);
             boolean result = previous == null;
+            sendMessage(player, new Message("Someone else is sitting here."));
             if (result) {
                 dealer.sit(player);
             }
@@ -100,6 +110,10 @@ public class Room {
             status = Status.PLAYING;
             return table;
         }
+    }
+
+    public void act(Action action) {
+        dealer.handleAction(action);
     }
 
     public void end() {

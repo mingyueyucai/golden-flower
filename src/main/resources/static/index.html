@@ -18,22 +18,35 @@
         <div class="col-md-6">
             <form class="form-inline">
                 <div class="form-group">
-                    <label for="connect">WebSocket connection:</label>
-                    <button id="connect" class="btn btn-default" type="submit">Connect</button>
-                    <button id="disconnect" class="btn btn-default" type="submit" disabled="disabled">Disconnect
-                    </button>
-                </div>
-            </form>
-        </div>
-        <div class="col-md-6">
-            <form class="form-inline">
-                <div class="form-group">
                     <input type="text" id="path" class="form-control" placeholder="path">
                 </div>
                 <div class="form-group">
                     <input type="text" id="request" class="form-control" placeholder="request">
                 </div>
                 <button id="send" class="btn btn-default" type="submit">Send</button>
+            </form>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <form class="form-inline">
+                <div class="form-group">
+                    <input type="text" id="room-num" class="form-control" placeholder="room number">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="seat-num" class="form-control" placeholder="seat number">
+                </div>
+                <button id="enter-room" class="btn btn-default" type="submit">Enter</button>
+            </form>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <form class="form-inline">
+                <div class="form-group">
+                    <input type="text" id="call-value" class="form-control" placeholder="call-value">
+                </div>
+                <button id="call" class="btn btn-default" type="submit">Call</button>
             </form>
         </div>
     </div>

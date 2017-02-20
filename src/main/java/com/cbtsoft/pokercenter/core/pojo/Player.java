@@ -32,6 +32,11 @@ public class Player {
         return true;
     }
 
+    public boolean add(long v) {
+        chips += v;
+        return true;
+    }
+
     /**
      * Two players are equal when their userNames are equal.
      *

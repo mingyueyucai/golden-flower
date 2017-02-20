@@ -1,5 +1,6 @@
 package com.cbtsoft.pokercenter.core.model;
 
+import com.cbtsoft.pokercenter.core.pojo.Action;
 import com.cbtsoft.pokercenter.core.pojo.Player;
 
 public abstract class Dealer {
@@ -25,6 +26,8 @@ public abstract class Dealer {
     public abstract void stand(Player player);
 
     public abstract void statusChanged(Player player);
+
+    public abstract void handleAction(Action action);
 
     public enum Status {
         WAITING,

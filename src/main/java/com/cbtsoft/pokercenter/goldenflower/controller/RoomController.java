@@ -2,10 +2,12 @@ package com.cbtsoft.pokercenter.goldenflower.controller;
 
 import com.cbtsoft.pokercenter.core.helper.SessionHelper;
 import com.cbtsoft.pokercenter.core.model.Room;
-import com.cbtsoft.pokercenter.core.pojo.Message;
+import com.cbtsoft.pokercenter.core.pojo.Action;
+import com.cbtsoft.pokercenter.core.pojo.Player;
 import com.cbtsoft.pokercenter.core.service.PlayerService;
 import com.cbtsoft.pokercenter.core.service.RoomService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -34,5 +36,19 @@ public class RoomController {
             return;
         }
         room.sit(request.get("seatNum"), playerService.getPlayerByUserName(userName));
+    }
+
+    @MessageMapping("/gf/room/{roomNum}/action")
+    public void action(Action action, @DestinationVariable("roomNum")Integer roomNum, SimpMessageHeaderAccessor messageHeaderAccessor) {
+        String userName = SessionHelper.getUserName(messageHeaderAccessor);
+        Room room;
+        // TODO: check request fields
+        if ((room = roomService.getRoom(roomNum)) == null) {
+            messageTemplate.convertAndSendToUser(userName, "/topic/message", "Error room number.");
+            return;
+        }
+        Player player = playerService.getPlayerByUserName(userName);
+        action.setPlayer(player);
+        room.act(action);
     }
 }

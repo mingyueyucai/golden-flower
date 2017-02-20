@@ -1,8 +1,7 @@
 var stompClient = null;
+var roomNum = null;
 
 function setConnected(connected) {
-    $("#connect").prop("disabled", connected);
-    $("#disconnect").prop("disabled", !connected);
     if (connected) {
         $("#conversation").show();
     }
@@ -24,14 +23,6 @@ function connect() {
     });
 }
 
-function disconnect() {
-    if (stompClient != null) {
-        stompClient.disconnect();
-    }
-    setConnected(false);
-    console.log("Disconnected");
-}
-
 function sendCommand() {
     stompClient.send($("#path").val(), {}, $("#request").val());
 }
@@ -40,11 +31,24 @@ function showGreeting(message) {
     $("#greetings").append("<tr><td>" + message + "</td></tr>");
 }
 
+function enterRoom() {
+    roomNum = $("#room-num").val();
+    var seatNum = $("#seat-num").val();
+    stompClient.send("/app/gf/enterRoom", {}, JSON.stringify({"roomNum": parseInt(roomNum), "seatNum": parseInt(seatNum)}));
+}
+
+function call() {
+    var v = $("#call-value").val();
+    stompClient.send("/app/gf/room/" + roomNum + "/action", {}, JSON.stringify({"actionType": 11, "detail": "" + v}))
+}
+
 $(function () {
     $("form").on('submit', function (e) {
         e.preventDefault();
     });
-    $( "#connect" ).click(function() { connect(); });
     $( "#disconnect" ).click(function() { disconnect(); });
     $( "#send" ).click(function() { sendCommand(); });
+    $( "#call" ).click(function() { call(); });
+    $("#enter-room").click(function() {enterRoom();});
+    connect();
 });
