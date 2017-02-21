@@ -64,6 +64,11 @@
             <artifactId>spring-security-messaging</artifactId>
             <version>4.2.1.RELEASE</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>21.0</version>
+        </dependency>
     </dependencies>
 
     <properties>

@@ -23,25 +23,25 @@ import java.util.TimerTask;
 public class GoldenFlowerDealer extends Dealer {
     private static final Logger logger = LoggerFactory.getLogger(GoldenFlowerDealer.class);
 
-    protected Map<Integer, Player> tableSnapshot;
+    protected Map<Integer, Player> tableSnapshot = new HashMap<>();
     protected Map<Player, Integer> tableSnapshotReverse;
     protected Map<Player, Integer> timedOutPlayerList;
     protected Deck deck;
     protected Map<Player, List<Card>> playerCards;
     protected List<Card> cardsOnBoard;
-    protected Map<Player, Long> currentTotalBet;
-    protected Map<Player, Long> currentTurnBet;
+    protected Map<Player, Long> currentTotalBet = new HashMap<>();
+    protected Map<Player, Long> currentTurnBet = new HashMap<>();
     protected long currentTurnMaxBet;
     protected int currentPos;
     protected GameStatus gameStatus;
-    protected List<Player> playerBlacklist;
+    protected List<Player> playerBlacklist = new ArrayList<>();
     // 本轮按钮位
     protected int button = 0;
 
     protected Timer gameBeginCountDownTimer = new Timer();
     protected Timer userTimeoutCountDownTimer = new Timer();
 
-    private static final int REST_TIME_IN_SECONDS = 3;
+    private static final int REST_TIME_IN_SECONDS = 5;
 
     private static final int MAX_PLAYER_NUM = 8;
 
@@ -50,7 +50,7 @@ public class GoldenFlowerDealer extends Dealer {
     public void sit(Player player) {
         // If dealer is waiting for players then check whether he can start this game or not.
         if (status == Status.WAITING) {
-            if (room.getTable().size() >= 2) {
+            if (room.getTable().size() == 2) {
                 startBeginCountdown();
             }
             if (room.getTable().size() > MAX_PLAYER_NUM) {
@@ -85,66 +85,82 @@ public class GoldenFlowerDealer extends Dealer {
         switch (ActionType.getTypeByValue(action.getActionType())) {
             case CALL:
                 if (tableSnapshotReverse.get(player) != currentPos) {
-                    room.sendMessage(player, new Message("It's not your turn."));
+                    sendMessage(player, new Message(8000, "It's not your turn."));
                     return;
                 }
                 long callValue = Long.valueOf(action.getDetail());
                 if (callValue > player.getChips()) {
-                    room.sendMessage(player, new Message("Do not have enough chip."));
+                    sendMessage(player, new Message(8000, "Do not have enough chip."));
                     return;
                 }
                 long currentTurnValue = callValue + currentTurnBet.getOrDefault(player, 0L);
                 if (currentTurnValue < currentTurnMaxBet) {
                     if (player.getChips() > callValue)  {
-                        room.sendMessage(player, new Message("Illegal call."));
+                        sendMessage(player, new Message(8000, "Illegal call."));
                     } else {
                         deduct(player, callValue);
                         currentTurnBet.put(player, currentTurnValue);
                         currentTotalBet.put(player, currentTotalBet.getOrDefault(player, 0L) + callValue);
-                        room.sendMessage(new Message(
-                                "Player Number " + currentPos + "(" + player.getUserName() + ") call to " + currentTurnValue + ". All in!"));
+                        Message message = new Message(2000,
+                                "Player Number " + currentPos + "(" + player.getUserName() + ") call to " + currentTurnValue + ". All in!");
                         nextPlayer();
+                        sendMessage(message);
                     }
-                    return;
                 } else if (currentTurnValue == currentTurnMaxBet) {
                     deduct(player, callValue);
                     currentTurnBet.put(player, currentTurnValue);
                     currentTotalBet.put(player, currentTotalBet.getOrDefault(player, 0L) + callValue);
+                    Message message;
                     if (currentTurnMaxBet > 0) {
-                        room.sendMessage(new Message(
-                                "Player Number " + currentPos + "(" + player.getUserName() + ") call to " + currentTurnValue));
+                        message = new Message(2000,
+                                "Player Number " + currentPos + "(" + player.getUserName() + ") call to " + currentTurnValue);
                     } else {
-                        room.sendMessage(new Message(
-                                "Player Number " + currentPos + "(" + player.getUserName() + ") check"));
+                        message = new Message(2000,
+                                "Player Number " + currentPos + "(" + player.getUserName() + ") check");
                     }
                     nextPlayer();
+                    sendMessage(message);
                     return;
                 } else if (currentTurnValue > currentTurnMaxBet) {
                     if (currentTurnValue > maxBetValue()) {
-                        room.sendMessage(player, new Message("Your bet is too large."));
+                        sendMessage(player, new Message(8000, "Your bet is too large."));
                         return;
                     }
                     deduct(player, callValue);
                     currentTurnBet.put(player, currentTurnValue);
                     currentTotalBet.put(player, currentTotalBet.getOrDefault(player, 0L) + callValue);
-                    room.sendMessage(new Message(
+                    sendMessage(new Message(2000,
                             "Player Number " + currentPos + "(" + player.getUserName() + ") raised to " + currentTurnValue));
                     currentTurnMaxBet = currentTurnValue;
                     nextPlayer();
-                    return;
                 }
                 return;
             case FOLD:
                 if (tableSnapshotReverse.get(player) != currentPos) {
-                    room.sendMessage(player, new Message("It's not your turn."));
+                    sendMessage(player, new Message(8000, "It's not your turn."));
                     return;
                 }
                 // fall through
             case LEAVE:
-                room.sendMessage(new Message("Player Number " + tableSnapshotReverse.get(player) + "(" + player.getUserName() + ") flopped"));
+                Message message = new Message(2001, "Player Number " + tableSnapshotReverse.get(player) + "(" + player.getUserName() + ") flopped");
                 playerBlacklist.add(player);
-                nextPlayer();
+                if (tableSnapshot.size() - playerBlacklist.size() == 1) {
+                    gameOverWithOneSurvivor();
+                } else {
+                    nextPlayer();
+                }
+                sendMessage(message);
         }
+    }
+
+    @Override
+    public Map<String, Object> getDetail() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("table", tableSnapshot);
+        result.put("blacklist", playerBlacklist.stream().map(Player::getUserName).toArray());
+        result.put("currentPos", currentPos);
+        result.put("currentBet", currentTurnBet);
+        return result;
     }
 
     private void nextPlayer() {
@@ -155,9 +171,7 @@ public class GoldenFlowerDealer extends Dealer {
         currentPos = getNextPos(currentPos);
         if (currentTurnBet.getOrDefault(tableSnapshot.get(currentPos), -1L) == currentTurnMaxBet) {
             nextTurn();
-            return;
         }
-        room.sendMessage(tableSnapshot.get(currentPos), new Message("========It's your turn========"));
     }
 
     private void nextTurn() {
@@ -170,17 +184,17 @@ public class GoldenFlowerDealer extends Dealer {
         switch (gameStatus) {
             case PRE_FLOP_ROUND:
                 cardsOnBoard.add(deck.deal());
-                room.sendMessage(new Message("Flop card: " + cardsOnBoard.get(0)));
+                sendMessage(new Message(1889, cardsOnBoard.get(0).toString()));
                 gameStatus = GameStatus.FLOP_ROUND;
                 break;
             case FLOP_ROUND:
                 cardsOnBoard.add(deck.deal());
-                room.sendMessage(new Message("Turn card: " + cardsOnBoard.get(1)));
+                sendMessage(new Message(1889, cardsOnBoard.get(1).toString()));
                 gameStatus = GameStatus.TURN_ROUND;
                 break;
             case TURN_ROUND:
                 cardsOnBoard.add(deck.deal());
-                room.sendMessage(new Message("River card: " + cardsOnBoard.get(2)));
+                sendMessage(new Message(1889, cardsOnBoard.get(2).toString()));
                 cardsOnBoard.add(deck.deal());
                 gameStatus = GameStatus.RIVER_ROUND;
                 break;
@@ -196,7 +210,7 @@ public class GoldenFlowerDealer extends Dealer {
         for (Long v : currentTotalBet.values()) {
             winChips += v;
         }
-        room.sendMessage(new Message("Player Number " + survivorPos + "(" + survivor.getUserName() + ") win!"));
+        sendMessage(new Message("Player Number " + survivorPos + "(" + survivor.getUserName() + ") win!"));
         survivor.add(winChips);
 
         finish();
@@ -218,7 +232,8 @@ public class GoldenFlowerDealer extends Dealer {
         for (Long v : currentTotalBet.values()) {
             winChips += v;
         }
-        room.sendMessage(new Message("Player Number " + winnerPos + "(" + winner.getUserName() + ") win!"));
+        List<Card> cardList = playerCards.get(winner);
+        sendMessage(new Message("Player Number " + winnerPos + "(" + winner.getUserName() + ") win! Card:" + cardList.get(0) + " " + cardList.get(1)));
         addChip(winner, winChips);
 
         finish();
@@ -229,7 +244,6 @@ public class GoldenFlowerDealer extends Dealer {
             startBeginCountdown();
         }
         status = Status.WAITING;
-        room.end();
     }
 
     private long maxBetValue() {
@@ -248,7 +262,7 @@ public class GoldenFlowerDealer extends Dealer {
         for (int i = 1; i < MAX_PLAYER_NUM; i++) {
             int key = (i - 1) % MAX_PLAYER_NUM + 1;
             if (tableSnapshot.containsKey(key)) {
-                room.sendMessage(new Message("Player Number " + i + "(" + tableSnapshot.get(key).getUserName() + ") is the button."));
+                sendMessage(new Message("Player Number " + i + "(" + tableSnapshot.get(key).getUserName() + ") is the button."));
                 return i;
             }
         }
@@ -257,12 +271,10 @@ public class GoldenFlowerDealer extends Dealer {
 
     private void deduct(Player player, long v) {
         player.deduct(v);
-        room.sendMessage(player, new Message("Deduct " + v + " chips. You have " + player.getChips() + " chips left."));
     }
 
     private void addChip(Player player, long v) {
         player.add(v);
-        room.sendMessage(player, new Message("Get " + v + " chips. You have " + player.getChips() + " chips left."));
     }
 
     private void startBeginCountdown() {
@@ -274,7 +286,6 @@ public class GoldenFlowerDealer extends Dealer {
     }
 
     private void beginGame() {
-        room.begin();
         status = Status.SERVING;
         try {
             // waiting for users who has just entered this room
@@ -282,6 +293,8 @@ public class GoldenFlowerDealer extends Dealer {
         } catch (InterruptedException e) {
             // ignore
         }
+
+        sendMessage(new Message(5001, "start"));
 
         tableSnapshot = room.getTable();
         playerBlacklist = new ArrayList<>(MAX_PLAYER_NUM);
@@ -303,7 +316,6 @@ public class GoldenFlowerDealer extends Dealer {
         button = determineButton(button);
         deductBlind();
 
-        room.sendMessage(tableSnapshot.get(currentPos), new Message("========It's your turn======="));
     }
 
     private int getNextPos(int p) {
@@ -322,23 +334,37 @@ public class GoldenFlowerDealer extends Dealer {
         deduct(player, BLIND_VALUE);
         currentTurnBet.put(player, BLIND_VALUE);
         currentTotalBet.put(player, BLIND_VALUE);
-        room.sendMessage(new Message("Player Number " + nextPos + "(" + player.getUserName() + ") raised to " + BLIND_VALUE));
 
         nextPos = getNextPos(nextPos);
         player = tableSnapshot.get(nextPos);
         deduct(player, BLIND_VALUE * 2);
         currentTurnBet.put(player, BLIND_VALUE * 2);
         currentTotalBet.put(player, BLIND_VALUE * 2);
-        room.sendMessage(new Message("Player Number " + nextPos + "(" + player.getUserName() + ") raised to " + (BLIND_VALUE * 2)));
 
         currentTurnMaxBet = BLIND_VALUE * 2;
         currentPos = getNextPos(nextPos);
+
+        sendMessage(new Message(2000, "Player Number " + nextPos + "(" + player.getUserName() + ") raised to " + (BLIND_VALUE * 2)));
     }
 
     private void dealCardToPlayer(Player player) {
         List<Card> tempCards = deck.deal(2);
         playerCards.put(player, tempCards);
-        room.sendMessage(player, new Message("You got a " + tempCards.get(0) + " and a " + tempCards.get(1)));
+        sendMessage(player, new Message(1888, playerCards.get(player).stream().map(Card::toString).toArray()));
+    }
+
+    private void sendMessage(Message message) {
+        Map<String, Object> detail = getDetail();
+        detail.put("text", message.getMessageBody());
+        Message wrappedMessage = new Message(message.getType(), detail);
+        room.sendMessage(wrappedMessage);
+    }
+
+    private void sendMessage(Player player, Message message) {
+        Map<String, Object> detail = getDetail();
+        detail.put("text", message.getMessageBody());
+        Message wrappedMessage = new Message(message.getType(), detail);
+        room.sendMessage(player, wrappedMessage);
     }
 
     private class GameBeginCountDownTimerTask extends TimerTask {
@@ -354,7 +380,7 @@ public class GoldenFlowerDealer extends Dealer {
                 this.cancel();
                 beginGame();
             } else {
-                room.sendMessage(new Message("Game will begin in " + secondsLeft + " second(s)."));
+                sendMessage(new Message("Game will begin in " + (secondsLeft + 1) + " second(s)."));
             }
         }
     }

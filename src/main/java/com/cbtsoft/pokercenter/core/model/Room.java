@@ -16,8 +16,6 @@ public class Room {
 
     private Dealer dealer;
 
-    private Status status = Status.WAITING;
-
     // all players including players are watching and players are playing
     final private List<Player> allPlayers = new ArrayList<>();
 
@@ -30,7 +28,6 @@ public class Room {
     }
 
     public void sendMessage(Message message) {
-        message.setMessageBody("Public: " + message.getMessageBody());
         synchronized (allPlayers) {
             for (Player player : allPlayers) {
                 template.convertAndSendToUser(player.getUserName(), "/topic/message", message);
@@ -39,11 +36,17 @@ public class Room {
     }
 
     public void sendMessage(Player player, Message message) {
-        message.setMessageBody("Private: " + message.getMessageBody());
         if (!allPlayers.contains(player)) {
             return;
         }
         template.convertAndSendToUser(player.getUserName(), "/topic/message", message);
+    }
+
+    public void sendMessageWithTableInfo(Message message) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("tableInfo", getTable());
+        body.put("text", message.getMessageBody());
+        sendMessage(new Message(message.getType(), body));
     }
 
     public boolean enter(Player player) {
@@ -51,7 +54,7 @@ public class Room {
             if (!allPlayers.contains(player)) {
                 boolean added = allPlayers.add(player);
                 if (added) {
-                    sendMessage(new Message(player.getUserName() + " entered this room."));
+                    sendMessageWithTableInfo(new Message(5000, player.getUserName() + " entered this room."));
                 }
                 return added;
             }
@@ -64,18 +67,14 @@ public class Room {
         synchronized (allPlayers) {
             boolean removed = allPlayers.remove(player);
             if (removed) {
-                sendMessage(new Message(player.getUserName() + " left this room."));
+                sendMessageWithTableInfo(new Message(5000, player.getUserName() + " left this room."));
             }
             return removed;
         }
     }
 
     public boolean sit(int seatNum, Player player) {
-        enter(player);
         synchronized (table) {
-            if (status != Status.WAITING) {
-                return false;
-            }
             for (Player one : table.values()) {
                 if (one.equals(player)) {
                     sendMessage(player, new Message("You have already sitten."));
@@ -83,6 +82,7 @@ public class Room {
                 }
             }
             Player previous = table.putIfAbsent(seatNum, player);
+            enter(player);
             boolean result = previous == null;
             if (result) {
                 dealer.sit(player);
@@ -106,19 +106,8 @@ public class Room {
         }
     }
 
-    public Map<Integer, Player> begin() {
-        synchronized (table) {
-            status = Status.PLAYING;
-            return table;
-        }
-    }
-
     public void act(Action action) {
         dealer.handleAction(action);
-    }
-
-    public void end() {
-        status = Status.WAITING;
     }
 
     public Map<Integer, Player> getTable() {
@@ -127,9 +116,7 @@ public class Room {
         }
     }
 
-    private enum Status {
-        WAITING,
-        PLAYING
+    public Map<String, Object> getDetail() {
+        return dealer.getDetail();
     }
-
 }

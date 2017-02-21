@@ -1,16 +1,18 @@
 package com.cbtsoft.pokercenter.core.pojo;
 
 public class Message {
-    public enum Type {
-        GLOBAL,
-        ROOM,
-        PRIVATE
-    }
-    private String from;
-    private Type type;
-    private String messageBody;
 
-    public Message(String body) {
+    private String from;
+    private int type;
+    private Object messageBody;
+
+    public Message(Object body) {
+        this.type = 0;
+        messageBody = body;
+    }
+
+    public Message(int type, Object body) {
+        this.type = type;
         messageBody = body;
     }
 
@@ -22,19 +24,19 @@ public class Message {
         this.from = from;
     }
 
-    public Type getType() {
+    public int getType() {
         return type;
     }
 
-    public void setType(Type type) {
+    public void setType(int type) {
         this.type = type;
     }
 
-    public String getMessageBody() {
+    public Object getMessageBody() {
         return messageBody;
     }
 
-    public void setMessageBody(String messageBody) {
+    public void setMessageBody(Object messageBody) {
         this.messageBody = messageBody;
     }
 }

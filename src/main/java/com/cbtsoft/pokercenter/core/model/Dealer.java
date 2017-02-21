@@ -3,6 +3,8 @@ package com.cbtsoft.pokercenter.core.model;
 import com.cbtsoft.pokercenter.core.pojo.Action;
 import com.cbtsoft.pokercenter.core.pojo.Player;
 
+import java.util.Map;
+
 public abstract class Dealer {
 
     protected Room room;
@@ -28,6 +30,8 @@ public abstract class Dealer {
     public abstract void statusChanged(Player player);
 
     public abstract void handleAction(Action action);
+
+    public abstract Map<String, Object>  getDetail();
 
     public enum Status {
         WAITING,

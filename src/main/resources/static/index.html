@@ -8,6 +8,14 @@
     <script src="/webjars/sockjs-client/sockjs.min.js"></script>
     <script src="/webjars/stomp-websocket/stomp.min.js"></script>
     <script src="/app.js"></script>
+    <style>
+        .watching {
+            color: #b5b5b5;
+        }
+        .current {
+            color: #5854c1;
+        }
+    </style>
 </head>
 <body>
 <noscript><h2 style="color: #ff0000">Seems your browser doesn't support Javascript! Websocket relies on Javascript being
@@ -47,18 +55,42 @@
                     <input type="text" id="call-value" class="form-control" placeholder="call-value">
                 </div>
                 <button id="call" class="btn btn-default" type="submit">Call</button>
+                <button id="fold" class="btn btn-default" type="submit">Fold</button>
             </form>
         </div>
     </div>
     <div class="row">
         <div class="col-md-12">
-            <table id="conversation" class="table table-striped">
+            <div class="form-group col-md-6">
+                <label>Cards in hand</label>
+                <p class="help-block" id="card-in-hand"></p>
+            </div>
+            <div class="form-group col-md-6">
+                <label>Cards on board</label>
+                <p class="help-block" id="card-on-board"></p>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <table id="table2" class="table table-striped">
                 <thead>
                 <tr>
-                    <th>Greetings</th>
+                    <th>Table</th>
                 </tr>
                 </thead>
-                <tbody id="greetings">
+                <tbody id="table">
+                </tbody>
+            </table>
+        </div>
+        <div class="col-md-6">
+            <table id="table1" class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Text Log</th>
+                </tr>
+                </thead>
+                <tbody id="text-log">
                 </tbody>
             </table>
         </div>
