@@ -10,9 +10,10 @@ public class SecurityConfig {
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
         auth
                 .inMemoryAuthentication()
-                    .withUser("interjiang").password("interjiang").roles("USER").and()
+                    .withUser("internjiang").password("internjiang").roles("USER").and()
                     .withUser("bosscang").password("bosscang").roles("USER").and()
-                    .withUser("managerzhou").password("managerzhou").roles("USER");
-
+                    .withUser("managerzhou").password("managerzhou").roles("USER").and()
+                    .withUser("didicout").password("didicout").roles("USER").and()
+                    .withUser("juyuan").password("juyuan").roles("USER");
     }
 }

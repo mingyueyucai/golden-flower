@@ -29,9 +29,12 @@ function connect() {
 }
 
 function parseResponse(message) {
-    if (message.type == 2000 || message.type == 2001) {
+    if (message.type == 2000 || message.type == 2001 || message.type == 5002) {
+        if (message.type == 5002) {
+            $("#text-log").append("<tr><td>" + message.messageBody.text + "</td></tr>");
+        }
         currentPos = message.messageBody.currentPos;
-        blackList = message.messageBody.blackList;
+        blackList = message.messageBody.blacklist;
         table = message.messageBody.table;
         currentBet = message.messageBody.currentBet;
         renderTable();
@@ -58,6 +61,9 @@ function renderTable() {
             className = "";
             if (currentPos == i) {
                 className += " current";
+            }
+            if (blackList.indexOf(table[i].userName) > -1) {
+                className += " watching";
             }
             currentBetValue = currentBet[table[i].userName] ? currentBet[table[i].userName] : 0;
             text = "No." + i + " " + table[i].userName + "($" + table[i].chips + "): " + "$" + currentBetValue;

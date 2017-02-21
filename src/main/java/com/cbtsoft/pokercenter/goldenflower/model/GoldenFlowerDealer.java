@@ -129,10 +129,10 @@ public class GoldenFlowerDealer extends Dealer {
                     deduct(player, callValue);
                     currentTurnBet.put(player, currentTurnValue);
                     currentTotalBet.put(player, currentTotalBet.getOrDefault(player, 0L) + callValue);
-                    sendMessage(new Message(2000,
-                            "Player Number " + currentPos + "(" + player.getUserName() + ") raised to " + currentTurnValue));
                     currentTurnMaxBet = currentTurnValue;
                     nextPlayer();
+                    sendMessage(new Message(2000,
+                            "Player Number " + currentPos + "(" + player.getUserName() + ") raised to " + currentTurnValue));
                 }
                 return;
             case FOLD:
@@ -143,7 +143,9 @@ public class GoldenFlowerDealer extends Dealer {
                 // fall through
             case LEAVE:
                 Message message = new Message(2001, "Player Number " + tableSnapshotReverse.get(player) + "(" + player.getUserName() + ") flopped");
-                playerBlacklist.add(player);
+                if (!playerBlacklist.contains(player)) {
+                    playerBlacklist.add(player);
+                }
                 if (tableSnapshot.size() - playerBlacklist.size() == 1) {
                     gameOverWithOneSurvivor();
                 } else {
@@ -210,7 +212,8 @@ public class GoldenFlowerDealer extends Dealer {
         for (Long v : currentTotalBet.values()) {
             winChips += v;
         }
-        sendMessage(new Message("Player Number " + survivorPos + "(" + survivor.getUserName() + ") win!"));
+        this.currentPos = -1;
+        sendMessage(new Message(5002, "Player Number " + survivorPos + "(" + survivor.getUserName() + ") win!"));
         survivor.add(winChips);
 
         finish();
@@ -233,7 +236,8 @@ public class GoldenFlowerDealer extends Dealer {
             winChips += v;
         }
         List<Card> cardList = playerCards.get(winner);
-        sendMessage(new Message("Player Number " + winnerPos + "(" + winner.getUserName() + ") win! Card:" + cardList.get(0) + " " + cardList.get(1)));
+        this.currentPos = -1;
+        sendMessage(new Message(5002, "Player Number " + winnerPos + "(" + winner.getUserName() + ") win! Card:" + cardList.get(0) + " " + cardList.get(1)));
         addChip(winner, winChips);
 
         finish();
@@ -259,7 +263,7 @@ public class GoldenFlowerDealer extends Dealer {
     }
 
     private int determineButton(int lastButton) {
-        for (int i = 1; i < MAX_PLAYER_NUM; i++) {
+        for (int i = lastButton + 1; i < lastButton + MAX_PLAYER_NUM; i++) {
             int key = (i - 1) % MAX_PLAYER_NUM + 1;
             if (tableSnapshot.containsKey(key)) {
                 sendMessage(new Message("Player Number " + i + "(" + tableSnapshot.get(key).getUserName() + ") is the button."));
@@ -315,11 +319,10 @@ public class GoldenFlowerDealer extends Dealer {
         gameStatus = GameStatus.PRE_FLOP_ROUND;
         button = determineButton(button);
         deductBlind();
-
     }
 
     private int getNextPos(int p) {
-        for (int i = p + 1; i < p + MAX_PLAYER_NUM; i++) {
+        for (int i = p + 1; i < p + MAX_PLAYER_NUM + 1; i++) {
             int key = (i - 1) % MAX_PLAYER_NUM + 1;
             if (tableSnapshot.containsKey(key) && !playerBlacklist.contains(tableSnapshot.get(key))) {
                 return key;
